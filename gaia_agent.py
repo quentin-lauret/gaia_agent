@@ -9,10 +9,9 @@ from langgraph.prebuilt import tools_condition
 from langchain_mistralai.chat_models import ChatMistralAI
 import tools
 from langfuse.langchain import CallbackHandler
-from dotenv import load_dotenv
-import os
+import config
 from langchain_core.rate_limiters import InMemoryRateLimiter
-from langgraph.types import RetryPolicy   # anciennement langgraph.pregel
+from langgraph.types import RetryPolicy
 import httpx
 
 def retry_on_transient(exception: Exception) -> bool:
@@ -54,13 +53,11 @@ rate_limiter = InMemoryRateLimiter(
     requests_per_second=0.15
 )
 
-load_dotenv()
-
 langfuse_handler = CallbackHandler()
 
-chat = ChatMistralAI(api_key=os.getenv("MISTRAL_API"), model_name="mistral-large-latest", rate_limiter=rate_limiter)
+chat = ChatMistralAI(api_key=config.MISTRAL_API, model_name="mistral-large-latest", rate_limiter=rate_limiter)
 chat = chat.bind_tools(tools.tools_list)
-formatter = ChatMistralAI(api_key=os.getenv("MISTRAL_API"), model_name="mistral-medium-latest", rate_limiter=rate_limiter)
+formatter = ChatMistralAI(api_key=config.MISTRAL_API, model_name="mistral-medium-latest", rate_limiter=rate_limiter)
 
 
 class AgentState(TypedDict):

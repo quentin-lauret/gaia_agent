@@ -1,12 +1,11 @@
 from langchain.tools import tool
 import subprocess, sys
 from langchain_tavily import TavilySearch
-from dotenv import load_dotenv
+import config
 import file_tools
 import web_tools
 import wiki_tools
 
-load_dotenv()
 search_tool = TavilySearch(
         max_results=4,
         topic="general",
