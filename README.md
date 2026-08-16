@@ -17,30 +17,35 @@ START → llm ⇄ tools → clear_tools → llm → formatter → END
 
 ## Tools
 
-| Tool | File | Purpose |
+All tool modules live in `src/gaia_agent/tools/`, and `tools/__init__.py` gathers them into `tools_list`.
+
+| Tool | Module | Purpose |
 | --- | --- | --- |
-| `search_tool` | `tools.py` | Tavily web search, four results with a generated answer |
-| `run_python` | `tools.py` | Runs Python in a subprocess (30 s timeout), returns stdout |
-| `download_attachment` | `file_tools.py` | Fetches a question's attachment by `task_id`, returns its path and the reader to use |
-| `read_table_file` | `file_tools.py` | Converts `.xlsx` / `.csv` to markdown tables |
-| `read_text_file` | `file_tools.py` | Reads any text file, truncated at 6000 characters |
-| `describe_image` | `file_tools.py` | Answers a question about an image via `mistral-medium-latest` |
-| `transcribe_audio` | `file_tools.py` | Converts `.mp3` to text via `voxtral-mini-latest` |
-| `fetch_webpage` | `web_tools.py` | Captures full page text, cleaned up, paginated with `offset` |
-| `read_pdf` | `web_tools.py` | Reads one PDF page as markdown via `mistral-ocr-latest`, cached per URL |
-| `extract_tables_from_url` | `web_tools.py` | Extracts page tables as markdown |
-| `wikipedia_search` | `wiki_tools.py` | Finds the exact title of a page |
-| `wikipedia_exists` | `wiki_tools.py` | Checks that a page exists |
-| `retrieve_wikipedia_page` | `wiki_tools.py` | Gets title, summary, and section names |
-| `get_wikipedia_sections` | `wiki_tools.py` | Gets content of named sections |
-| `wikipedia_revision_at_date` | `wiki_tools.py` | Provides permalink to a page as it was on a specific date |
+| `search_tool` | `tools/search.py` | Tavily web search, four results with a generated answer |
+| `run_python` | `tools/python_exec.py` | Runs Python in a subprocess (30 s timeout), returns stdout |
+| `download_attachment` | `tools/files.py` | Fetches a question's attachment by `task_id`, returns its path and the reader to use |
+| `read_table_file` | `tools/files.py` | Converts `.xlsx` / `.csv` to markdown tables |
+| `read_text_file` | `tools/files.py` | Reads any text file, truncated at 6000 characters |
+| `describe_image` | `tools/files.py` | Answers a question about an image via `mistral-medium-latest` |
+| `transcribe_audio` | `tools/files.py` | Converts `.mp3` to text via `voxtral-mini-latest` |
+| `fetch_webpage` | `tools/web.py` | Captures full page text, cleaned up, paginated with `offset` |
+| `read_pdf` | `tools/web.py` | Reads one PDF page as markdown via `mistral-ocr-latest`, cached per URL |
+| `extract_tables_from_url` | `tools/web.py` | Extracts page tables as markdown |
+| `wikipedia_search` | `tools/wiki.py` | Finds the exact title of a page |
+| `wikipedia_exists` | `tools/wiki.py` | Checks that a page exists |
+| `retrieve_wikipedia_page` | `tools/wiki.py` | Gets title, summary, and section names |
+| `get_wikipedia_sections` | `tools/wiki.py` | Gets content of named sections |
+| `wikipedia_revision_at_date` | `tools/wiki.py` | Provides permalink to a page as it was on a specific date |
 
 Attachments are downloaded from the `gaia-benchmark/GAIA` dataset instead of the scoring API. The `/files/{task_id}` endpoint returns 404 for every task. They are cached in `attachments/`.
 
 ## Setup
 
+The project is a package under `src/`, so install it before running it. The editable
+install reads its dependencies from `requirements.txt`:
+
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 Copy `.env.example` to `.env` and fill it in:
@@ -64,7 +69,7 @@ cp .env.example .env
 | `LANGFUSE_SECRET_KEY` | Langfuse tracing | — |
 | `LANGFUSE_HOST` | Langfuse tracing | — |
 
-`config.py` reads these variables and applies the defaults. The model names, limits, rate limiter, and retry policy remain in the code.
+`src/gaia_agent/config.py` reads these variables and applies the defaults. It loads the `.env` sitting at the root of the repository, so the agent reads the same configuration whatever directory it is run from. The model names, limits, rate limiter, and retry policy remain in the code.
 
 You must accept the terms of the gated `gaia-benchmark/GAIA` dataset with this token to download the attachments.
 
@@ -79,27 +84,39 @@ python main.py
 Ask a single question:
 
 ```python
-import gaia_agent
-print(gaia_agent.call_agent("How many studio albums did Mercedes Sosa release between 2000 and 2009?"))
+from gaia_agent.agent.graph import call_agent
+print(call_agent("How many studio albums did Mercedes Sosa release between 2000 and 2009?"))
 ```
 
-Each tool module runs its own smoke test when executed directly:
+The smoke tests in `tests/` exercise each group of tools against the real APIs. Only
+`smoke_wiki.py` is free to run; the others spend Mistral and Tavily credits:
 
 ```bash
-python tools.py
-python file_tools.py
-python web_tools.py
-python wiki_tools.py
+python tests/smoke_wiki.py
+python tests/smoke_search.py
+python tests/smoke_files.py
+python tests/smoke_web.py
 ```
 
-## Files
+## Layout
 
-| File | Role |
-| --- | --- |
-| `main.py` | Fetches the questions, runs the agent for each, and submits the answers |
-| `config.py` | Loads the `.env` and exposes the configuration variables |
-| `gaia_agent.py` | Contains graph, prompts, models, retry, and rate limiting |
-| `tools.py` | Contains search and Python tools, assembles `tools_list` |
-| `file_tools.py` | Handles attachment downloads and readers |
-| `web_tools.py` | Reads web pages, PDFs, and tables |
-| `wiki_tools.py` | Contains Wikipedia tools |
+```
+main.py                         entry point, runs and submits the benchmark
+pyproject.toml                  package definition, dependencies from requirements.txt
+src/gaia_agent/
+├── config.py                   loads the .env and exposes the configuration
+├── benchmark.py                fetches the questions, runs the agent, submits the answers
+├── agent/
+│   ├── prompts.py              the thinker and formatter system prompts
+│   └── graph.py                the LangGraph state machine, models, retry, rate limiting
+└── tools/
+    ├── __init__.py             assembles tools_list
+    ├── mistral_client.py       the Mistral client shared by the vision, audio and OCR tools
+    ├── search.py               Tavily search
+    ├── python_exec.py          Python execution
+    ├── files.py                attachment download and readers
+    ├── web.py                  web pages, PDFs, tables
+    └── wiki.py                 Wikipedia
+tests/                          smoke tests, one per group of tools
+attachments/                    cache of the downloaded attachments (gitignored)
+```

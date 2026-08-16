@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaia-agent"
+version = "0.1.0"
+description = "A LangGraph tool-calling agent answering the GAIA benchmark questions"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+# requirements.txt stays the single source of the dependencies.
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -10,10 +10,9 @@ import os
 import re
 import requests
 import pandas as pd
-import config
-from mistralai.client import Mistral
 
-mistral = Mistral(api_key=config.MISTRAL_API)
+from gaia_agent import config
+from gaia_agent.tools.mistral_client import call_mistral, mistral
 
 DATASET_URL = config.GAIA_DATASET_URL
 ATTACHMENTS_DIR = config.ATTACHMENTS_DIR
@@ -27,15 +26,6 @@ READER_HINT = {
 }
 MAX_CHARS = 6000
 MAX_ROWS = 100
-
-
-def call_mistral(action, **kwargs):
-    """Call a method of the Mistral client, and turn its errors into a message for the agent
-    instead of an exception, so that a failed call only costs one turn."""
-    try:
-        return action(**kwargs)
-    except Exception as e:
-        return f"Error: the Mistral API call failed ({type(e).__name__}: {str(e)[:300]})."
 
 
 @tool
@@ -145,15 +135,3 @@ def transcribe_audio(path: str) -> str:
 
 
 TOOLS = [download_attachment, read_table_file, read_text_file, describe_image, transcribe_audio]
-
-if __name__ == "__main__":
-    print(download_attachment.invoke("7bd855d8-463d-4ed5-93ca-5fe35145f733"))
-    print(read_table_file.invoke(os.path.join(ATTACHMENTS_DIR, "7bd855d8-463d-4ed5-93ca-5fe35145f733.xlsx")))
-    print(download_attachment.invoke("99c9cc74-fdc8-46c6-8f8d-3ce2d3bfeea3"))
-    print(transcribe_audio.invoke(os.path.join(ATTACHMENTS_DIR, "99c9cc74-fdc8-46c6-8f8d-3ce2d3bfeea3.mp3")))
-    print(download_attachment.invoke("cca530fc-4052-43b2-b130-b30968d8aa44"))
-    print(describe_image.invoke({
-        "path": os.path.join(ATTACHMENTS_DIR, "cca530fc-4052-43b2-b130-b30968d8aa44.png"),
-        "question": "What are the piece positions?",
-    }))
-    print(download_attachment.invoke("metadata"))
