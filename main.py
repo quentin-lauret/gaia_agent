@@ -1,18 +1,13 @@
 import requests
 import gaia_agent
-from dotenv import load_dotenv
-import os
-import time
+import config
 
-load_dotenv()
-
-base_url = os.getenv("BASE_URL")
-questions_url = base_url + "questions"
-submission_url = base_url + "submit"
+questions_url = config.BASE_URL + "questions"
+submission_url = config.BASE_URL + "submit"
 def submit(answers: list[dict[str, str]]):
     body = {
-    "username": "quentin-lauret",
-    "agent_code": "https://huggingface.co/spaces/quentin-lauret/agent-course",
+    "username": config.GAIA_USERNAME,
+    "agent_code": config.AGENT_CODE,
     "answers": answers
     }
     response = requests.post(submission_url, json=body)

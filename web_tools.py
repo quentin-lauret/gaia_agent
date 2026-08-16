@@ -4,9 +4,10 @@ import io
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
+import config
 from file_tools import call_mistral, mistral
 
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) GAIA (quentin.lauret@epita.fr)"
+USER_AGENT = f"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) GAIA ({config.CONTACT_EMAIL})"
 MAX_CHARS = 6000
 MAX_TABLES = 10
 MAX_ROWS = 30

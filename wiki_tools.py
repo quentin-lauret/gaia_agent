@@ -3,8 +3,9 @@ from langchain.tools import tool
 import json
 import requests
 import wikipediaapi
+import config
 
-USER_AGENT = "GAIA (quentin.lauret@epita.fr)"
+USER_AGENT = f"GAIA ({config.CONTACT_EMAIL})"
 API_URL = "https://en.wikipedia.org/w/api.php"
 MAX_SUMMARY = 2000
 MAX_SECTION = 4000

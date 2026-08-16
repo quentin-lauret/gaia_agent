@@ -10,15 +10,13 @@ import os
 import re
 import requests
 import pandas as pd
-from dotenv import load_dotenv
+import config
 from mistralai.client import Mistral
 
-load_dotenv()
+mistral = Mistral(api_key=config.MISTRAL_API)
 
-mistral = Mistral(api_key=os.getenv("MISTRAL_API"))
-
-DATASET_URL = "https://huggingface.co/datasets/gaia-benchmark/GAIA/resolve/main/2023/validation"
-ATTACHMENTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "attachments")
+DATASET_URL = config.GAIA_DATASET_URL
+ATTACHMENTS_DIR = config.ATTACHMENTS_DIR
 TASK_ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 EXTENSIONS = [".xlsx", ".png", ".mp3", ".py", ".csv", ".pdf", ".docx", ".txt", ".jsonld", ".pdb", ".zip"]
 READER_HINT = {
@@ -55,7 +53,7 @@ def download_attachment(task_id: str) -> str:
             break
         response = requests.get(
             f"{DATASET_URL}/{task_id}{extension}",
-            headers={"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"},
+            headers={"Authorization": f"Bearer {config.HF_TOKEN}"},
             timeout=60,
         )
         if response.status_code == 200:
