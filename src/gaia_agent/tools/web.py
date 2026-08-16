@@ -4,8 +4,9 @@ import io
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-import config
-from file_tools import call_mistral, mistral
+
+from gaia_agent import config
+from gaia_agent.tools.mistral_client import call_mistral, mistral
 
 USER_AGENT = f"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) GAIA ({config.CONTACT_EMAIL})"
 MAX_CHARS = 6000
@@ -99,8 +100,3 @@ def extract_tables_from_url(url: str) -> str:
 
 
 TOOLS = [fetch_webpage, read_pdf, extract_tables_from_url]
-
-if __name__ == "__main__":
-    print(fetch_webpage.invoke({"url": "https://www.universetoday.com/"}))
-    print(read_pdf.invoke({"url": "https://arxiv.org/pdf/2306.01116v1"}))
-    print(extract_tables_from_url.invoke({"url": "https://en.wikipedia.org/w/index.php?oldid=1126540422"}))
